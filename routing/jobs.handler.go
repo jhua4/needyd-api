@@ -78,5 +78,7 @@ func (jobsHandler *JobsHandler) getJobs(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	h.Respond(w, jobs, 200)
+	res := &m.Response{Data: jobs}
+
+	h.Respond(w, res, 200)
 }
