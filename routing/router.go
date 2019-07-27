@@ -4,20 +4,36 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type connStr struct {
+	Value string
+}
+
 // NewRouter Create router and assign routes
 func NewRouter() http.Handler {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	clientOptions := options.Client().ApplyURI(os.Getenv("MONGODB_CONN"))
+
+	// Uncomment to easily connect to a different db
+	// clientOptions := options.Client().ApplyURI(os.Getenv("MONGODB_CONN"))
+
+	dclient, _ := datastore.NewClient(ctx, "needyd-data")
+	connKey := datastore.NameKey("CONN_STR", "MONGODB_CONN", nil)
+	var conn connStr
+	err := dclient.Get(ctx, connKey, &conn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	clientOptions := options.Client().ApplyURI(conn.Value)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
